@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -18,6 +19,8 @@ func TestLoadConfigAcceptsValidSettings(t *testing.T) {
 			return "127.0.0.1"
 		case "PORT":
 			return "8080"
+		case "DB_PATH":
+			return "/tmp/test.db"
 		default:
 			return ""
 		}
@@ -42,10 +45,11 @@ func TestNewRejectsInvalidConfig(t *testing.T) {
 func TestNewCreatesHandler(t *testing.T) {
 	t.Parallel()
 
-	application, err := New(Config{Host: "127.0.0.1", Port: "8080"})
+	application, err := New(Config{Host: "127.0.0.1", Port: "8080", DBPath: filepath.Join(t.TempDir(), "test.db")})
 	if err != nil {
 		t.Fatalf("new app: %v", err)
 	}
+	t.Cleanup(func() { application.db.Close() })
 
 	if application.Handler() == nil {
 		t.Fatal("expected handler to be initialized")

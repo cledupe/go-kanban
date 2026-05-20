@@ -11,6 +11,7 @@ FROM base AS development
 
 ENV HOST=0.0.0.0
 ENV PORT=8080
+ENV DB_PATH=/data/kanban.db
 
 EXPOSE 8080
 
@@ -32,6 +33,7 @@ COPY --from=build /out/api /usr/local/bin/api
 
 ENV HOST=0.0.0.0
 ENV PORT=8080
+ENV DB_PATH=/data/kanban.db
 
 EXPOSE 8080
 

@@ -9,8 +9,9 @@ import (
 )
 
 type Config struct {
-	Host string
-	Port string
+	Host   string
+	Port   string
+	DBPath string
 }
 
 func LoadConfigFromEnv() (Config, error) {
@@ -19,8 +20,9 @@ func LoadConfigFromEnv() (Config, error) {
 
 func LoadConfig(getenv func(string) string) (Config, error) {
 	cfg := Config{
-		Host: getenv("HOST"),
-		Port: getenv("PORT"),
+		Host:   getenv("HOST"),
+		Port:   getenv("PORT"),
+		DBPath: getenv("DB_PATH"),
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -46,6 +48,10 @@ func (c Config) Validate() error {
 
 	if port < 1 || port > 65535 {
 		return errors.New("PORT must be between 1 and 65535")
+	}
+
+	if c.DBPath == "" {
+		return errors.New("DB_PATH is required")
 	}
 
 	return nil

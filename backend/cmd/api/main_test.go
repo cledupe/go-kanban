@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/cledupe/go-kanban/backend/internal/app"
@@ -20,6 +21,8 @@ func TestRealMainPassesConfigToRunner(t *testing.T) {
 			return "127.0.0.1"
 		case "PORT":
 			return "8080"
+		case "DB_PATH":
+			return filepath.Join(t.TempDir(), "test.db")
 		default:
 			return ""
 		}
@@ -39,7 +42,7 @@ func TestRealMainPassesConfigToRunner(t *testing.T) {
 		t.Fatalf("realMain returned error: %v", err)
 	}
 
-	if got.Host != "127.0.0.1" || got.Port != "8080" {
+	if got.Host != "127.0.0.1" || got.Port != "8080" || got.DBPath == "" {
 		t.Fatalf("unexpected config passed to runner: %+v", got)
 	}
 }
@@ -73,6 +76,8 @@ func TestRealMainReturnsRunnerError(t *testing.T) {
 			return "127.0.0.1"
 		case "PORT":
 			return "8080"
+		case "DB_PATH":
+			return "/tmp/test.db"
 		default:
 			return ""
 		}
@@ -92,7 +97,7 @@ func TestMainExitsWhenConfigurationIsInvalid(t *testing.T) {
 	t.Parallel()
 
 	cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcessMain")
-	cmd.Env = append(os.Environ(), "GO_WANT_HELPER_PROCESS=1", "HOST=", "PORT=")
+	cmd.Env = append(os.Environ(), "GO_WANT_HELPER_PROCESS=1", "HOST=", "PORT=", "DB_PATH=")
 
 	err := cmd.Run()
 	if err == nil {

@@ -3,14 +3,17 @@ package app
 import (
 	"context"
 	"errors"
+	"log"
 	"net"
 	"net/http"
 
 	httpapi "github.com/cledupe/go-kanban/backend/internal/http"
+	"github.com/cledupe/go-kanban/backend/internal/storage/sqlite"
 )
 
 type App struct {
 	server         *http.Server
+	db             *sqlite.DB
 	listenAndServe func() error
 	serve          func(net.Listener) error
 	shutdown       func(context.Context) error
@@ -23,6 +26,15 @@ func New(cfg Config) (*App, error) {
 		return nil, err
 	}
 
+	db, err := sqlite.Open(cfg.DBPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := sqlite.RunMigrations(db); err != nil {
+		return nil, err
+	}
+
 	server := &http.Server{
 		Addr:    cfg.Address(),
 		Handler: httpapi.NewRouter(),
@@ -30,6 +42,7 @@ func New(cfg Config) (*App, error) {
 
 	return &App{
 		server:         server,
+		db:             db,
 		listenAndServe: server.ListenAndServe,
 		serve:          server.Serve,
 		shutdown:       server.Shutdown,
@@ -49,6 +62,12 @@ func Run(ctx context.Context, cfg Config) error {
 
 	select {
 	case <-ctx.Done():
+		log.Println("shutting down...")
+		if application.db != nil {
+			if err := application.db.Close(); err != nil {
+				log.Printf("close db: %v", err)
+			}
+		}
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
 		return application.shutdown(shutdownCtx)
@@ -70,4 +89,8 @@ func (a *App) Handler() http.Handler {
 
 func (a *App) Shutdown(ctx context.Context) error {
 	return a.shutdown(ctx)
+}
+
+func (a *App) DB() *sqlite.DB {
+	return a.db
 }
