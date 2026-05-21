@@ -12,6 +12,16 @@ type Board struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type BoardDetail struct {
+	Board
+	Columns []ColumnWithCards `json:"columns"`
+}
+
+type ColumnWithCards struct {
+	Column
+	Cards []Card `json:"cards"`
+}
+
 type BoardRepository interface {
 	Create(ctx context.Context, board Board) (Board, error)
 	GetByID(ctx context.Context, id string) (Board, error)

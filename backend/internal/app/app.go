@@ -8,6 +8,8 @@ import (
 	"net/http"
 
 	httpapi "github.com/cledupe/go-kanban/backend/internal/http"
+	"github.com/cledupe/go-kanban/backend/internal/http/handlers"
+	"github.com/cledupe/go-kanban/backend/internal/service"
 	"github.com/cledupe/go-kanban/backend/internal/storage/sqlite"
 )
 
@@ -35,9 +37,27 @@ func New(cfg Config) (*App, error) {
 		return nil, err
 	}
 
+	boardRepo := sqlite.NewBoardRepository(db)
+	columnRepo := sqlite.NewColumnRepository(db)
+	cardRepo := sqlite.NewCardRepository(db)
+
+	boardService := service.NewBoardService(boardRepo, columnRepo, cardRepo)
+	columnService := service.NewColumnService(boardRepo, columnRepo)
+	cardService := service.NewCardService(columnRepo, cardRepo)
+
+	boardHandler := handlers.NewBoardHandler(boardService)
+	columnHandler := handlers.NewColumnHandler(columnService)
+	cardHandler := handlers.NewCardHandler(cardService)
+
+	handler := httpapi.NewRouter(httpapi.RouterDependencies{
+		BoardHandler:  boardHandler,
+		ColumnHandler: columnHandler,
+		CardHandler:   cardHandler,
+	})
+
 	server := &http.Server{
 		Addr:    cfg.Address(),
-		Handler: httpapi.NewRouter(),
+		Handler: handler,
 	}
 
 	return &App{

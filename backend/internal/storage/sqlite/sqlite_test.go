@@ -513,3 +513,49 @@ func TestCreateBoardGeneratesID(t *testing.T) {
 		t.Fatal("expected different IDs")
 	}
 }
+
+func TestCardRepositoryMove(t *testing.T) {
+	t.Parallel()
+
+	db := setupTestDB(t)
+	ctx := context.Background()
+	boardRepo := NewBoardRepository(db)
+	columnRepo := NewColumnRepository(db)
+	cardRepo := NewCardRepository(db)
+
+	board, _ := boardRepo.Create(ctx, domain.Board{Name: "Board"})
+	col1, _ := columnRepo.Create(ctx, domain.Column{BoardID: board.ID, Name: "Col 1", Position: 0})
+	col2, _ := columnRepo.Create(ctx, domain.Column{BoardID: board.ID, Name: "Col 2", Position: 1})
+
+	card, err := cardRepo.Create(ctx, domain.Card{ColumnID: col1.ID, Title: "Card", Position: 0})
+	if err != nil {
+		t.Fatalf("create card: %v", err)
+	}
+
+	if err := cardRepo.Move(ctx, card.ID, col2.ID, 5); err != nil {
+		t.Fatalf("move card: %v", err)
+	}
+
+	got, err := cardRepo.GetByID(ctx, card.ID)
+	if err != nil {
+		t.Fatalf("get card after move: %v", err)
+	}
+	if got.ColumnID != col2.ID {
+		t.Fatalf("expected column %q, got %q", col2.ID, got.ColumnID)
+	}
+	if got.Position != 5 {
+		t.Fatalf("expected position 5, got %d", got.Position)
+	}
+}
+
+func TestCardRepositoryMoveNotFound(t *testing.T) {
+	t.Parallel()
+
+	db := setupTestDB(t)
+	repo := NewCardRepository(db)
+
+	err := repo.Move(context.Background(), "nonexistent", "col-1", 0)
+	if err == nil {
+		t.Fatal("expected error for nonexistent card")
+	}
+}

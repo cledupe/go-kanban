@@ -115,3 +115,22 @@ func (r *CardRepository) Delete(ctx context.Context, id string) error {
 
 	return nil
 }
+
+func (r *CardRepository) Move(ctx context.Context, cardID string, targetColumnID string, position int) error {
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	result, err := r.db.ExecContext(ctx,
+		`UPDATE cards SET column_id = ?, position = ?, updated_at = ? WHERE id = ?`,
+		targetColumnID, position, now, cardID,
+	)
+	if err != nil {
+		return fmt.Errorf("move card %s: %w", cardID, err)
+	}
+
+	affected, _ := result.RowsAffected()
+	if affected == 0 {
+		return fmt.Errorf("move card %s: %w", cardID, sql.ErrNoRows)
+	}
+
+	return nil
+}

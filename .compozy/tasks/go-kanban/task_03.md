@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Serviços e API REST para boards, columns e cards
 type: backend
 complexity: high
@@ -29,11 +29,11 @@ Implement the core backend service layer and REST API for the board, column, and
 </requirements>
 
 ## Subtasks
-- [ ] 3.1 Define service interfaces and domain errors for board, column, and card operations.
-- [ ] 3.2 Implement service behavior for CRUD flows and board detail aggregation.
-- [ ] 3.3 Add HTTP handlers and request-response DTOs for all MVP resource endpoints.
-- [ ] 3.4 Wire services and handlers into the backend application startup and routing tree.
-- [ ] 3.5 Add automated checks covering service rules, validation failures, and endpoint contracts.
+- [x] 3.1 Define service interfaces and domain errors for board, column, and card operations.
+- [x] 3.2 Implement service behavior for CRUD flows and board detail aggregation.
+- [x] 3.3 Add HTTP handlers and request-response DTOs for all MVP resource endpoints.
+- [x] 3.4 Wire services and handlers into the backend application startup and routing tree.
+- [x] 3.5 Add automated checks covering service rules, validation failures, and endpoint contracts.
 
 ## Implementation Details
 Use TechSpec "Core Interfaces", "API Endpoints", and "Testing Approach" as the source of truth for this task. Keep transport mapping in handlers, business rules in services, and persistence access in repositories.
@@ -64,13 +64,13 @@ Use TechSpec "Core Interfaces", "API Endpoints", and "Testing Approach" as the s
 
 ## Tests
 - Unit tests:
-  - [ ] Service create and update operations reject invalid input with domain errors.
-  - [ ] Board detail service returns columns and cards in the expected order.
-  - [ ] Handler validation maps malformed payloads and unknown resource identifiers to correct HTTP responses.
+  - [x] Service create and update operations reject invalid input with domain errors.
+  - [x] Board detail service returns columns and cards in the expected order.
+  - [x] Handler validation maps malformed payloads and unknown resource identifiers to correct HTTP responses.
 - Integration tests:
-  - [ ] `POST /api/boards` creates a board and returns the expected response contract.
-  - [ ] `GET /api/boards/:id` returns the full board shape with ordered columns and cards.
-  - [ ] `PATCH` and `DELETE` resource endpoints return stable status codes for success and missing records.
+  - [x] `POST /api/boards` creates a board and returns the expected response contract.
+  - [x] `GET /api/boards/:id` returns the full board shape with ordered columns and cards.
+  - [x] `PATCH` and `DELETE` resource endpoints return stable status codes for success and missing records.
 - Test coverage target: >=80%
 - All tests must pass
 

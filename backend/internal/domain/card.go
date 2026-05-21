@@ -21,4 +21,5 @@ type CardRepository interface {
 	ListByColumnID(ctx context.Context, columnID string) ([]Card, error)
 	Update(ctx context.Context, card Card) (Card, error)
 	Delete(ctx context.Context, id string) error
+	Move(ctx context.Context, cardID string, targetColumnID string, position int) error
 }
