@@ -32,7 +32,12 @@ func (h *BoardHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	board, err := h.boardService.CreateBoard(r.Context(), service.CreateBoardInput{Name: req.Name})
+	input := service.CreateBoardInput{Name: req.Name}
+	if req.Template != nil {
+		input.Template = *req.Template
+	}
+
+	board, err := h.boardService.CreateBoard(r.Context(), input)
 	if err != nil {
 		writeError(w, err)
 		return

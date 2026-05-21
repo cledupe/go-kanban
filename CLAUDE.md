@@ -19,7 +19,7 @@ Tasks do plano:
 
 - `task_01` `completed`: bootstrap do backend Go com Docker e Compose
 - `task_02` `completed`: persistencia SQLite, migracoes e repositorios base
-- `task_03` `pending`: servicos e API REST para boards, columns e cards
+- `task_03` `completed`: servicos e API REST para boards, columns e cards
 - `task_04` `pending`: templates de board e regras de criacao inicial
 - `task_05` `pending`: bootstrap do frontend Next.js com cliente HTTP e Compose
 - `task_06` `pending`: UI de lista de boards e detalhe do board

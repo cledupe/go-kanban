@@ -97,6 +97,149 @@ func TestIntegrationCreateAndGetBoard(t *testing.T) {
 	}
 }
 
+func TestIntegrationCreateBoardFromBasicKanbanTemplate(t *testing.T) {
+	handler := setupIntegration(t)
+
+	tmpl := "basic-kanban"
+	body, _ := json.Marshal(CreateBoardRequest{Name: "ignored", Template: &tmpl})
+	req := httptest.NewRequest(http.MethodPost, "/api/boards", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("create board from template: expected 201, got %d", rec.Code)
+	}
+
+	var board domain.Board
+	if err := json.NewDecoder(rec.Body).Decode(&board); err != nil {
+		t.Fatalf("decode board: %v", err)
+	}
+	if board.Name != "Basic Kanban" {
+		t.Fatalf("expected board name 'Basic Kanban', got %q", board.Name)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/boards/"+board.ID, nil)
+	req.SetPathValue("id", board.ID)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	var detail domain.BoardDetail
+	json.NewDecoder(rec.Body).Decode(&detail)
+
+	if len(detail.Columns) != 3 {
+		t.Fatalf("expected 3 columns, got %d", len(detail.Columns))
+	}
+	expected := []string{"To Do", "In Progress", "Done"}
+	for i, col := range detail.Columns {
+		if col.Name != expected[i] {
+			t.Fatalf("column %d: expected %q, got %q", i, expected[i], col.Name)
+		}
+		if col.Position != i {
+			t.Fatalf("column %d: expected position %d, got %d", i, i, col.Position)
+		}
+	}
+}
+
+func TestIntegrationCreateBoardFromBugTrackerTemplate(t *testing.T) {
+	handler := setupIntegration(t)
+
+	tmpl := "bug-tracker"
+	body, _ := json.Marshal(CreateBoardRequest{Name: "ignored", Template: &tmpl})
+	req := httptest.NewRequest(http.MethodPost, "/api/boards", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("create board from template: expected 201, got %d", rec.Code)
+	}
+
+	var board domain.Board
+	json.NewDecoder(rec.Body).Decode(&board)
+	if board.Name != "Bug Tracker" {
+		t.Fatalf("expected board name 'Bug Tracker', got %q", board.Name)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/boards/"+board.ID, nil)
+	req.SetPathValue("id", board.ID)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	var detail domain.BoardDetail
+	json.NewDecoder(rec.Body).Decode(&detail)
+
+	expected := []string{"Backlog", "Investigating", "Fixing", "Verified"}
+	if len(detail.Columns) != 4 {
+		t.Fatalf("expected 4 columns, got %d", len(detail.Columns))
+	}
+	for i, col := range detail.Columns {
+		if col.Name != expected[i] {
+			t.Fatalf("column %d: expected %q, got %q", i, expected[i], col.Name)
+		}
+		if col.Position != i {
+			t.Fatalf("column %d: expected position %d, got %d", i, i, col.Position)
+		}
+	}
+}
+
+func TestIntegrationCreateBoardFromContentPipelineTemplate(t *testing.T) {
+	handler := setupIntegration(t)
+
+	tmpl := "content-pipeline"
+	body, _ := json.Marshal(CreateBoardRequest{Name: "ignored", Template: &tmpl})
+	req := httptest.NewRequest(http.MethodPost, "/api/boards", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("create board from template: expected 201, got %d", rec.Code)
+	}
+
+	var board domain.Board
+	json.NewDecoder(rec.Body).Decode(&board)
+	if board.Name != "Content Pipeline" {
+		t.Fatalf("expected board name 'Content Pipeline', got %q", board.Name)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/boards/"+board.ID, nil)
+	req.SetPathValue("id", board.ID)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	var detail domain.BoardDetail
+	json.NewDecoder(rec.Body).Decode(&detail)
+
+	expected := []string{"Ideas", "Drafting", "Review", "Published"}
+	if len(detail.Columns) != 4 {
+		t.Fatalf("expected 4 columns, got %d", len(detail.Columns))
+	}
+	for i, col := range detail.Columns {
+		if col.Name != expected[i] {
+			t.Fatalf("column %d: expected %q, got %q", i, expected[i], col.Name)
+		}
+		if col.Position != i {
+			t.Fatalf("column %d: expected position %d, got %d", i, i, col.Position)
+		}
+	}
+}
+
+func TestIntegrationCreateBoardWithInvalidTemplateReturns400(t *testing.T) {
+	handler := setupIntegration(t)
+
+	tmpl := "nonexistent"
+	body, _ := json.Marshal(CreateBoardRequest{Name: "Board", Template: &tmpl})
+	req := httptest.NewRequest(http.MethodPost, "/api/boards", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid template, got %d", rec.Code)
+	}
+}
+
 func TestIntegrationCreateColumnAndCard(t *testing.T) {
 	handler := setupIntegration(t)
 

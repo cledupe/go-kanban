@@ -66,6 +66,38 @@ func TestBoardHandlerCreate(t *testing.T) {
 	}
 }
 
+func TestBoardHandlerCreateWithTemplate(t *testing.T) {
+	t.Parallel()
+
+	h := NewBoardHandler(&mockBoardService{
+		createFn: func(_ context.Context, input service.CreateBoardInput) (domain.Board, error) {
+			if input.Template != "basic-kanban" {
+				t.Fatalf("expected template 'basic-kanban', got %q", input.Template)
+			}
+			return domain.Board{ID: "new-id", Name: "Basic Kanban"}, nil
+		},
+	})
+
+	tmpl := "basic-kanban"
+	body, _ := json.Marshal(CreateBoardRequest{Name: "ignored", Template: &tmpl})
+	req := httptest.NewRequest(http.MethodPost, "/api/boards", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Create(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", rec.Code)
+	}
+
+	var board domain.Board
+	if err := json.NewDecoder(rec.Body).Decode(&board); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if board.Name != "Basic Kanban" {
+		t.Fatalf("expected 'Basic Kanban', got %q", board.Name)
+	}
+}
+
 func TestBoardHandlerCreateInvalidJSON(t *testing.T) {
 	t.Parallel()
 

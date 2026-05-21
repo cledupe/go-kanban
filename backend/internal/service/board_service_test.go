@@ -90,6 +90,7 @@ func (m *mockCardRepo) Move(ctx context.Context, cardID string, targetColumnID s
 func TestBoardServiceCreateBoard(t *testing.T) {
 	t.Parallel()
 
+	var createdColumns []domain.Column
 	boardRepo := &mockBoardRepo{
 		createFn: func(_ context.Context, board domain.Board) (domain.Board, error) {
 			board.ID = "board-1"
@@ -97,7 +98,15 @@ func TestBoardServiceCreateBoard(t *testing.T) {
 		},
 	}
 
-	s := NewBoardService(boardRepo, &mockColumnRepo{}, &mockCardRepo{})
+	columnRepo := &mockColumnRepo{
+		createFn: func(_ context.Context, col domain.Column) (domain.Column, error) {
+			col.ID = "col-" + col.Name
+			createdColumns = append(createdColumns, col)
+			return col, nil
+		},
+	}
+
+	s := NewBoardService(boardRepo, columnRepo, &mockCardRepo{})
 
 	board, err := s.CreateBoard(context.Background(), CreateBoardInput{Name: "My Board"})
 	if err != nil {
@@ -105,6 +114,152 @@ func TestBoardServiceCreateBoard(t *testing.T) {
 	}
 	if board.Name != "My Board" {
 		t.Fatalf("expected name 'My Board', got %q", board.Name)
+	}
+	if len(createdColumns) != 0 {
+		t.Fatalf("expected no columns for blank board, got %d", len(createdColumns))
+	}
+}
+
+func TestBoardServiceCreateBoardFromBasicKanbanTemplate(t *testing.T) {
+	t.Parallel()
+
+	expectedColumns := []string{"To Do", "In Progress", "Done"}
+	var createdColumns []domain.Column
+
+	boardRepo := &mockBoardRepo{
+		createFn: func(_ context.Context, board domain.Board) (domain.Board, error) {
+			board.ID = "board-1"
+			return board, nil
+		},
+	}
+
+	columnRepo := &mockColumnRepo{
+		createFn: func(_ context.Context, col domain.Column) (domain.Column, error) {
+			col.ID = "col-" + col.Name
+			createdColumns = append(createdColumns, col)
+			return col, nil
+		},
+	}
+
+	s := NewBoardService(boardRepo, columnRepo, &mockCardRepo{})
+
+	board, err := s.CreateBoard(context.Background(), CreateBoardInput{Name: "ignored", Template: "basic-kanban"})
+	if err != nil {
+		t.Fatalf("create board from template: %v", err)
+	}
+	if board.Name != "Basic Kanban" {
+		t.Fatalf("expected board name 'Basic Kanban', got %q", board.Name)
+	}
+	if len(createdColumns) != 3 {
+		t.Fatalf("expected 3 columns, got %d", len(createdColumns))
+	}
+	for i, col := range createdColumns {
+		if col.Name != expectedColumns[i] {
+			t.Fatalf("column %d: expected %q, got %q", i, expectedColumns[i], col.Name)
+		}
+		if col.Position != i {
+			t.Fatalf("column %d: expected position %d, got %d", i, i, col.Position)
+		}
+		if col.BoardID != "board-1" {
+			t.Fatalf("column %d: expected board_id 'board-1', got %q", i, col.BoardID)
+		}
+	}
+}
+
+func TestBoardServiceCreateBoardFromBugTrackerTemplate(t *testing.T) {
+	t.Parallel()
+
+	expectedColumns := []string{"Backlog", "Investigating", "Fixing", "Verified"}
+	var createdColumns []domain.Column
+
+	boardRepo := &mockBoardRepo{
+		createFn: func(_ context.Context, board domain.Board) (domain.Board, error) {
+			board.ID = "board-1"
+			return board, nil
+		},
+	}
+
+	columnRepo := &mockColumnRepo{
+		createFn: func(_ context.Context, col domain.Column) (domain.Column, error) {
+			col.ID = "col-" + col.Name
+			createdColumns = append(createdColumns, col)
+			return col, nil
+		},
+	}
+
+	s := NewBoardService(boardRepo, columnRepo, &mockCardRepo{})
+
+	board, err := s.CreateBoard(context.Background(), CreateBoardInput{Name: "ignored", Template: "bug-tracker"})
+	if err != nil {
+		t.Fatalf("create board from template: %v", err)
+	}
+	if board.Name != "Bug Tracker" {
+		t.Fatalf("expected board name 'Bug Tracker', got %q", board.Name)
+	}
+	if len(createdColumns) != 4 {
+		t.Fatalf("expected 4 columns, got %d", len(createdColumns))
+	}
+	for i, col := range createdColumns {
+		if col.Name != expectedColumns[i] {
+			t.Fatalf("column %d: expected %q, got %q", i, expectedColumns[i], col.Name)
+		}
+		if col.Position != i {
+			t.Fatalf("column %d: expected position %d, got %d", i, i, col.Position)
+		}
+	}
+}
+
+func TestBoardServiceCreateBoardFromContentPipelineTemplate(t *testing.T) {
+	t.Parallel()
+
+	expectedColumns := []string{"Ideas", "Drafting", "Review", "Published"}
+	var createdColumns []domain.Column
+
+	boardRepo := &mockBoardRepo{
+		createFn: func(_ context.Context, board domain.Board) (domain.Board, error) {
+			board.ID = "board-1"
+			return board, nil
+		},
+	}
+
+	columnRepo := &mockColumnRepo{
+		createFn: func(_ context.Context, col domain.Column) (domain.Column, error) {
+			col.ID = "col-" + col.Name
+			createdColumns = append(createdColumns, col)
+			return col, nil
+		},
+	}
+
+	s := NewBoardService(boardRepo, columnRepo, &mockCardRepo{})
+
+	board, err := s.CreateBoard(context.Background(), CreateBoardInput{Name: "ignored", Template: "content-pipeline"})
+	if err != nil {
+		t.Fatalf("create board from template: %v", err)
+	}
+	if board.Name != "Content Pipeline" {
+		t.Fatalf("expected board name 'Content Pipeline', got %q", board.Name)
+	}
+	if len(createdColumns) != 4 {
+		t.Fatalf("expected 4 columns, got %d", len(createdColumns))
+	}
+	for i, col := range createdColumns {
+		if col.Name != expectedColumns[i] {
+			t.Fatalf("column %d: expected %q, got %q", i, expectedColumns[i], col.Name)
+		}
+		if col.Position != i {
+			t.Fatalf("column %d: expected position %d, got %d", i, i, col.Position)
+		}
+	}
+}
+
+func TestBoardServiceCreateBoardRejectsUnknownTemplate(t *testing.T) {
+	t.Parallel()
+
+	s := NewBoardService(&mockBoardRepo{}, &mockColumnRepo{}, &mockCardRepo{})
+
+	_, err := s.CreateBoard(context.Background(), CreateBoardInput{Name: "My Board", Template: "nonexistent"})
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Fatalf("expected ErrInvalidInput for unknown template, got %v", err)
 	}
 }
 

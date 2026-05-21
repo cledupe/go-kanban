@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Templates de board e regras de criação inicial
 type: backend
 complexity: medium

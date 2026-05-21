@@ -27,7 +27,8 @@ func NewBoardService(
 }
 
 type CreateBoardInput struct {
-	Name string
+	Name     string
+	Template string
 }
 
 func (s *BoardService) ListBoards(ctx context.Context) ([]domain.Board, error) {
@@ -39,7 +40,34 @@ func (s *BoardService) CreateBoard(ctx context.Context, input CreateBoardInput) 
 		return domain.Board{}, domain.ErrInvalidInput
 	}
 
-	return s.boardRepo.Create(ctx, domain.Board{Name: strings.TrimSpace(input.Name)})
+	name := strings.TrimSpace(input.Name)
+	var columns []string
+
+	if input.Template != "" {
+		tmpl, ok := domain.Templates[input.Template]
+		if !ok {
+			return domain.Board{}, domain.ErrInvalidInput
+		}
+		name = tmpl.Name
+		columns = tmpl.Columns
+	}
+
+	board, err := s.boardRepo.Create(ctx, domain.Board{Name: name})
+	if err != nil {
+		return domain.Board{}, err
+	}
+
+	for i, colName := range columns {
+		if _, err := s.columnRepo.Create(ctx, domain.Column{
+			BoardID:  board.ID,
+			Name:     colName,
+			Position: i,
+		}); err != nil {
+			return domain.Board{}, err
+		}
+	}
+
+	return board, nil
 }
 
 func (s *BoardService) GetBoard(ctx context.Context, boardID string) (domain.BoardDetail, error) {
